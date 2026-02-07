@@ -1,5 +1,6 @@
-use crate::analyze::{summarize_tx, Tx};
+﻿use crate::analyze::{summarize_tx, Tx};
 use crate::esplora::EsploraClient;
+use crate::graph::write_tx_graph_dot;
 use crate::report::write_report_files;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -7,7 +8,7 @@ use serde_json::json;
 
 #[derive(Parser)]
 #[command(name = "btc-utxo-analyzer")]
-#[command(about = "Bitcoin UTXO Analyzer (Day 3)")]
+#[command(about = "Bitcoin UTXO Analyzer (Day 4)")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -23,6 +24,9 @@ pub enum Commands {
 
     /// Generate report files (reports/<txid>.json and reports/<txid>.md)
     Report { txid: String },
+
+    /// Generate Graphviz DOT graph (graphs/<txid>.dot)
+    Graph { txid: String },
 }
 
 impl Cli {
@@ -63,6 +67,17 @@ impl Cli {
                     serde_json::to_string_pretty(&json!({
                         "report_json": json_path.to_string_lossy(),
                         "report_md": md_path.to_string_lossy()
+                    }))?
+                );
+            }
+            Commands::Graph { txid } => {
+                let tx_json = client.fetch_tx(&txid).await?;
+                let tx: Tx = serde_json::from_value(tx_json)?;
+                let dot_path = write_tx_graph_dot(&tx)?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "graph_dot": dot_path.to_string_lossy()
                     }))?
                 );
             }

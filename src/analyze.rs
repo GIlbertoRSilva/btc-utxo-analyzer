@@ -1,8 +1,9 @@
-use serde::Deserialize;
+﻿use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Prevout {
     pub value: Option<u64>,
+    pub scriptpubkey_address: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -13,6 +14,7 @@ pub struct Vin {
 #[derive(Debug, Deserialize)]
 pub struct Vout {
     pub value: u64,
+    pub scriptpubkey_address: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

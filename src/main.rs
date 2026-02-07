@@ -2,6 +2,7 @@ mod cli;
 mod esplora;
 mod analyze;
 mod report;
+mod graph;
 
 use anyhow::Result;
 use clap::Parser;

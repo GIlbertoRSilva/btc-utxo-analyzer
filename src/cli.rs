@@ -1,10 +1,12 @@
 use crate::esplora::EsploraClient;
+use crate::analyze::{summarize_tx, Tx};
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use serde_json::json;
 
 #[derive(Parser)]
 #[command(name = "btc-utxo-analyzer")]
-#[command(about = "Bitcoin UTXO Analyzer (Day 1 MVP)")]
+#[command(about = "Bitcoin UTXO Analyzer (Day 2)")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -12,10 +14,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Fetch and display raw transaction JSON
     Tx { txid: String },
-
-    /// Fetch and display raw address info JSON
     Address { addr: String },
 }
 
@@ -25,8 +24,22 @@ impl Cli {
 
         match self.command {
             Commands::Tx { txid } => {
-                let tx = client.fetch_tx(&txid).await?;
-                println!("{}", serde_json::to_string_pretty(&tx)?);
+                let tx_json = client.fetch_tx(&txid).await?;
+                let tx: Tx = serde_json::from_value(tx_json)?;
+                let s = summarize_tx(tx);
+
+                let out = json!({
+                    "txid": s.txid,
+                    "n_inputs": s.n_inputs,
+                    "n_outputs": s.n_outputs,
+                    "total_in_sat": s.total_in_sat,
+                    "total_out_sat": s.total_out_sat,
+                    "fee_sat": s.fee_sat,
+                    "vsize": s.vsize,
+                    "fee_rate_sat_vb": s.fee_rate_sat_vb()
+                });
+
+                println!("{}", serde_json::to_string_pretty(&out)?);
             }
             Commands::Address { addr } => {
                 let info = client.fetch_address(&addr).await?;

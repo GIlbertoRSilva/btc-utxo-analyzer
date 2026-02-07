@@ -1,6 +1,7 @@
 mod cli;
 mod esplora;
 mod analyze;
+mod report;
 
 use anyhow::Result;
 use clap::Parser;
